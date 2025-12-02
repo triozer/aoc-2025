@@ -5,6 +5,7 @@ const colors = {
 	green: "\x1b[32m",
 	yellow: "\x1b[33m",
 	magenta: "\x1b[35m",
+	red: "\x1b[31m",
 	bold: "\x1b[1m",
 };
 
@@ -33,8 +34,19 @@ function formatDuration(ms: number): string {
 	return `${colors.magenta}${(ms / 60000).toFixed(2)}m${colors.reset}`;
 }
 
-export function run<T>(name: string, fn: () => T): T {
-	console.log(`${timestamp()} ${colors.cyan}▶${colors.reset} ${colors.bold}${name}${colors.reset} starting...`);
+function checkResult<T>(result: T, expected?: T): string {
+	if (expected === undefined) return "";
+	const passed = result === expected;
+	if (passed) {
+		return ` ${colors.green}✔ PASS${colors.reset}`;
+	}
+	return ` ${colors.red}✘ FAIL${colors.reset} ${colors.dim}(expected: ${expected})${colors.reset}`;
+}
+
+export function run<T>(name: string, fn: () => T, expected?: T): T {
+	console.log(
+		`${timestamp()} ${colors.cyan}▶${colors.reset} ${colors.bold}${name}${colors.reset} starting...`,
+	);
 
 	const start = performance.now();
 	const result = fn();
@@ -43,13 +55,21 @@ export function run<T>(name: string, fn: () => T): T {
 	console.log(
 		`${timestamp()} ${colors.green}✓${colors.reset} ${colors.bold}${name}${colors.reset} finished in ${formatDuration(duration)}`,
 	);
-	console.log(`  ${colors.dim}→${colors.reset} ${result}\n`);
+	console.log(
+		`  ${colors.dim}→${colors.reset} ${result}${checkResult(result, expected)}\n`,
+	);
 
 	return result;
 }
 
-export async function runAsync<T>(name: string, fn: () => Promise<T>): Promise<T> {
-	console.log(`${timestamp()} ${colors.cyan}▶${colors.reset} ${colors.bold}${name}${colors.reset} starting...`);
+export async function runAsync<T>(
+	name: string,
+	fn: () => Promise<T>,
+	expected?: T,
+): Promise<T> {
+	console.log(
+		`${timestamp()} ${colors.cyan}▶${colors.reset} ${colors.bold}${name}${colors.reset} starting...`,
+	);
 
 	const start = performance.now();
 	const result = await fn();
@@ -58,8 +78,9 @@ export async function runAsync<T>(name: string, fn: () => Promise<T>): Promise<T
 	console.log(
 		`${timestamp()} ${colors.green}✓${colors.reset} ${colors.bold}${name}${colors.reset} finished in ${formatDuration(duration)}`,
 	);
-	console.log(`  ${colors.dim}→${colors.reset} ${result}\n`);
+	console.log(
+		`  ${colors.dim}→${colors.reset} ${result}${checkResult(result, expected)}\n`,
+	);
 
 	return result;
 }
-

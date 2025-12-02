@@ -83,11 +83,11 @@ const input = (await Bun.file(\`\${import.meta.dir}/input.txt\`).text())
 	.split("\\n")
 	.map((line) => line.trim());
 
-run("Part 1 (example)", () => part1(example));
-run("Part 1", () => part1(input));
+run("Part 1 (example)", () => part1(example) /*, expected */);
+run("Part 1", () => part1(input) /*, expected */);
 
-// run("Part 2 (example)", () => part2(example));
-// run("Part 2", () => part2(input));
+// run("Part 2 (example)", () => part2(example) /*, expected */);
+// run("Part 2", () => part2(input) /*, expected */);
 `;
 
 const input = await fetchInput();

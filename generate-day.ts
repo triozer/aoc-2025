@@ -63,7 +63,9 @@ async function fetchInput(): Promise<string> {
 	return input.trimEnd();
 }
 
-const indexTemplate = `import { run } from "../../shared/timings";
+const indexTemplate = `// https://rarewood.dev/aoc-${year}/day-${dayNumber}
+
+import { run } from "../../shared/timings";
 
 function part1(lines: string[]) {
 	// TODO: Implement part 1

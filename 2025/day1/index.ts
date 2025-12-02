@@ -1,3 +1,5 @@
+// https://rarewood.dev/aoc-2025/day-1
+
 import { run } from "../../shared/timings";
 
 const start = 0;

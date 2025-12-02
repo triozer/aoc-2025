@@ -1,4 +1,4 @@
-import { run } from "../shared/timings";
+import { run } from "../../shared/timings";
 
 const start = 0;
 const end = 99;
@@ -52,8 +52,8 @@ const input = (await Bun.file(`${import.meta.dir}/input.txt`).text())
 	.split("\n")
 	.map((line) => line.trim());
 
-run("Part 1 (example)", () => part1(example));
+run("Part 1 (example)", () => part1(example), 3);
 run("Part 1", () => part1(input));
 
-run("Part 2 (example)", () => part2(example));
+run("Part 2 (example)", () => part2(example), 6);
 run("Part 2", () => part2(input));

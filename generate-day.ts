@@ -64,6 +64,7 @@ async function fetchInput(): Promise<string> {
 }
 
 const indexTemplate = `// https://rarewood.dev/aoc-${year}/day-${dayNumber}
+// https://adventofcode.com/${year}/day/${dayNumber}
 
 import { run } from "../../shared/timings";
 
@@ -85,11 +86,11 @@ const input = (await Bun.file(\`\${import.meta.dir}/input.txt\`).text())
 	.split("\\n")
 	.map((line) => line.trim());
 
-run("Part 1 (example)", () => part1(example) /*, expected */);
-run("Part 1", () => part1(input) /*, expected */);
+run("Part 1 (example)", () => part1(example), 0);
+run("Part 1", () => part1(input));
 
-// run("Part 2 (example)", () => part2(example) /*, expected */);
-// run("Part 2", () => part2(input) /*, expected */);
+// run("Part 2 (example)", () => part2(example), 0);
+// run("Part 2", () => part2(input));
 `;
 
 const input = await fetchInput();

@@ -1,4 +1,5 @@
 // https://rarewood.dev/aoc-2025/day-1
+// https://adventofcode.com/2025/day/1
 
 import { run } from "../../shared/timings";
 

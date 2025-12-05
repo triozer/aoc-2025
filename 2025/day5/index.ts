@@ -72,12 +72,7 @@ function part2(input: string) {
 	const ranges = parseRanges(rawRanges);
 	const merged = mergeRanges(ranges);
 
-	let count = 0;
-	for (const range of merged) {
-		count += range.end - range.start + 1;
-	}
-
-	return count;
+	return merged.reduce((acc, range) => acc + (range.end - range.start + 1), 0);
 }
 
 const example = await Bun.file(`${import.meta.dir}/example.txt`).text();

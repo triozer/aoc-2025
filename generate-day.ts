@@ -63,8 +63,21 @@ async function fetchInput(): Promise<string> {
 	return input.trimEnd();
 }
 
-const indexTemplate = `// https://rarewood.dev/aoc-${year}/day-${dayNumber}
-// https://adventofcode.com/${year}/day/${dayNumber}
+const blogPostUrl = `https://rarewood.dev/aoc-${year}/day-${dayNumber}`;
+const adventOfCodeUrl = `https://adventofcode.com/${year}/day/${dayNumber}`;
+
+// Open the Advent of Code URL in the default browser
+console.log(`\n🌐 Opening ${adventOfCodeUrl}...`);
+const openCommand =
+	process.platform === "win32"
+		? "start"
+		: process.platform === "darwin"
+			? "open"
+			: "xdg-open";
+Bun.spawn([openCommand, adventOfCodeUrl], { stdout: "inherit" });
+
+const indexTemplate = `// ${blogPostUrl}
+// ${adventOfCodeUrl}
 
 import { run } from "../../shared/timings";
 

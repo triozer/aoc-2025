@@ -40,11 +40,8 @@ function solve(problems: Problem[]) {
 }
 
 function parseInput(text: string, getColumn: GetColumn): Problem[] {
-	const lines = text.split("\n").filter((line) => line.length > 0);
-
-	const rows = lines.flatMap((line) =>
-		line.split(/\(\d+\)\s+\(\d+\)/).filter((token) => token.length > 0),
-	);
+	const lines = text.split("\n");
+	const rows = lines.flatMap((line) => line.split(/\(\d+\)\s+\(\d+\)/));
 
 	const lastLine = rows.pop();
 	if (lastLine === undefined) throw new Error("No last line found");
@@ -75,7 +72,6 @@ const part1: GetColumn = (lines, start, length) => {
 
 const part2: GetColumn = (lines, start, length) => {
 	const numbers: number[] = [];
-
 	// Each column forms one number, read top-to-bottom
 	for (let col = start; col < start + length; col++) {
 		let digitString = "";

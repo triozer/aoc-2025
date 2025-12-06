@@ -21,7 +21,7 @@ function isOperation(operation: string): operation is Operation {
 
 type Problem = {
 	numbers: number[];
-	operation: "+" | "*";
+	operation: Operation;
 };
 
 type GetColumn = (lines: string[], start: number, length: number) => number[];

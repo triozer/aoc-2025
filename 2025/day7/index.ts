@@ -6,8 +6,7 @@ import { run } from "../../shared/timings";
 const START = "S";
 const SPLITTER = "^";
 
-function part1(lines: string[]) {
-	const grid = lines.map((line) => line.split(""));
+function part1(grid: string[][]) {
 	const height = grid.length;
 	const width = grid[0]?.length ?? 0;
 
@@ -45,8 +44,7 @@ function part1(lines: string[]) {
 	return splits;
 }
 
-function part2(lines: string[]) {
-	const grid = lines.map((line) => line.split(""));
+function part2(grid: string[][]) {
 	const height = grid.length;
 	const width = grid[0]?.length ?? 0;
 
@@ -91,11 +89,11 @@ function part2(lines: string[]) {
 
 const example = (await Bun.file(`${import.meta.dir}/example.txt`).text())
 	.split("\n")
-	.map((line) => line.trim());
+	.map((line) => line.trim().split(""));
 
 const input = (await Bun.file(`${import.meta.dir}/input.txt`).text())
 	.split("\n")
-	.map((line) => line.trim());
+	.map((line) => line.trim().split(""));
 
 run("Part 1 (example)", () => part1(example), 21);
 run("Part 1", () => part1(input));

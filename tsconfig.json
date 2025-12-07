@@ -1,4 +1,6 @@
 {
+
+	"exclude": ["**/*.tsx"],
 	"compilerOptions": {
 		// Environment setup & latest features
 		"lib": ["ESNext"],

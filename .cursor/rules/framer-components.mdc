@@ -1,0 +1,617 @@
+---
+alwaysApply: true
+---
+
+When asked to create a Framer component visualizer, follow the project structure below. Do never run/lint or try to fix components.
+
+## Start When In View + Restart Button (REQUIRED)
+
+**All components MUST start their animation only when visible in the viewport** and include a restart button. Use `IntersectionObserver` to detect visibility.
+
+```typescript
+// State for visibility detection
+const [isInView, setIsInView] = useState(false)
+const [hasStarted, setHasStarted] = useState(false)
+const containerRef = useRef<HTMLDivElement>(null)
+
+// IntersectionObserver to detect when component is in view
+useEffect(() => {
+    if (!containerRef.current) return
+    
+    const observer = new IntersectionObserver(
+        ([entry]) => {
+            if (entry.isIntersecting && !hasStarted) {
+                setIsInView(true)
+                setHasStarted(true)
+            }
+        },
+        { threshold: 0.3 } // Start when 30% visible
+    )
+    
+    observer.observe(containerRef.current)
+    return () => observer.disconnect()
+}, [hasStarted])
+
+// Reset function (called by restart button)
+const handleRestart = () => {
+    // Reset all animation state
+    resetState()
+    // Re-enable animation to restart immediately
+    setHasStarted(true)
+    setIsInView(true)
+}
+
+// Animation effect - only runs when isInView is true
+useEffect(() => {
+    if (!isInView || !autoPlay || internalPlayMode !== "auto") return
+    // ... animation logic
+}, [isInView, autoPlay, internalPlayMode, /* other deps */])
+```
+
+### Restart Button JSX
+
+Always include a restart button, typically in the controls/footer area:
+
+```tsx
+{/* Restart Button - Always visible */}
+<button
+    onClick={handleRestart}
+    style={{
+        ...font,
+        fontSize: "12px",
+        padding: "8px 16px",
+        border: `1px solid ${theme.border}`,
+        borderRadius: "6px",
+        background: theme.cardBg,
+        color: theme.textInverse,
+        cursor: "pointer",
+        display: "flex",
+        alignItems: "center",
+        gap: "6px",
+    }}
+>
+    <span style={{ fontSize: "14px" }}>↻</span>
+    Restart
+</button>
+```
+
+### Key Points
+
+1. **Container ref**: The main container div needs `ref={containerRef}` for the observer
+2. **30% threshold**: Animation starts when 30% of the component is visible (adjustable)
+3. **hasStarted flag**: Prevents re-triggering on scroll back up (optional - remove if you want restart on re-enter)
+4. **Restart button**: Always provide a way to manually restart the animation
+5. **Check isInView**: All animation effects should check `isInView` before running
+
+## Project Structure
+
+```
+aoc-2025/
+├── shared/framer/
+│   ├── day1.md          # Problem description & prompt
+│   ├── day2.md
+│   └── ...
+├── 2025/                 # Year folder (could be 2024, 2023, etc.)
+│   ├── day1/
+│   │   ├── component.tsx # Framer visualizer component
+│   │   ├── index.ts      # Solution logic
+│   │   ├── input.txt     # Puzzle input
+│   │   └── example.txt   # Example input
+│   ├── day2/
+│   └── ...
+```
+
+- **Problem descriptions**: `shared/framer/dayX.md` - Contains the puzzle description and visualization prompt
+- **Components**: `2025/dayX/component.tsx` - The Framer visualizer (use existing ones as inspiration)
+- **Solutions**: `2025/dayX/index.ts` - The algorithm implementation
+- **Inputs**: `2025/dayX/input.txt` and `example.txt`
+
+> **Note**: Problem descriptions in `shared/framer/` are ignored via `.gitignore`, so read them using `ls` & `cat` shell commands.
+
+## Color System
+
+Use these semantic color tokens for consistency across components:
+
+```typescript
+const theme = {
+    // Backgrounds
+    bg: "transparent",
+    cardBg: "#1f2937",      // dark card/panel background
+    surfaceBg: "#374151",   // medium gray surface
+    
+    // Text
+    text: "#1f2937",        // primary text (dark)
+    textInverse: "#f3f4f6", // text on dark backgrounds
+    textMuted: "#9ca3af",   // secondary/dimmed text
+    
+    // Borders & Dividers
+    border: "#e5e7eb",      // light gray borders
+    
+    // State Colors
+    success: "#22c55e",     // green - success/valid states
+    warning: "#f59e0b",     // amber - warning/processing states
+    error: "#ef4444",       // red - error/invalid states
+    
+    // Neutrals
+    neutral: "#f3f4f6",     // light neutral
+    neutralDark: "#374151", // dark neutral
+}
+
+// Default accent color (customizable via props)
+accentColor = "#d946ef"  // vibrant purple/magenta
+```
+
+## Font
+
+Use the Font prop for most of the text/char looking output. It will always be a mono font.
+
+## Event Log Component
+
+Use this pattern for showing step-by-step algorithm progress, actions, or debug output:
+
+```typescript
+// Types for structured log entries
+type LogEntryType = "info" | "success" | "warning" | "error" | "step"
+
+interface LogEntry {
+    message: string
+    type?: LogEntryType
+    detail?: string // secondary info (e.g., values, positions)
+}
+
+// State
+const [eventLog, setEventLog] = useState<LogEntry[]>([])
+const logContainerRef = useRef<HTMLDivElement>(null)
+
+// Auto-scroll to bottom when new entries added
+useEffect(() => {
+    if (logContainerRef.current) {
+        logContainerRef.current.scrollTop = logContainerRef.current.scrollHeight
+    }
+}, [eventLog])
+
+// Helper to add entries
+const addLogEntry = (message: string, type: LogEntryType = "info", detail?: string) => {
+    setEventLog(prev => [...prev, { message, type, detail }])
+}
+
+// Get color based on entry type
+const getLogColor = (type: LogEntryType = "info") => {
+    switch (type) {
+        case "success": return theme.success
+        case "warning": return theme.warning
+        case "error": return theme.error
+        case "step": return accentColor
+        default: return theme.textMuted
+    }
+}
+
+// Get prefix icon/symbol based on type
+const getLogPrefix = (type: LogEntryType = "info") => {
+    switch (type) {
+        case "success": return "✓"
+        case "warning": return "!"
+        case "error": return "✗"
+        case "step": return "→"
+        default: return "•"
+    }
+}
+```
+
+### Event Log JSX
+
+```tsx
+{/* Event Log Panel */}
+<div style={{ display: "flex", flexDirection: "column", flex: 1 }}>
+    {/* Header */}
+    <div style={{
+        fontSize: "10px",
+        fontWeight: "bold",
+        color: theme.textMuted,
+        letterSpacing: "0.05em",
+        textTransform: "uppercase",
+        marginBottom: "8px",
+    }}>
+        Event Log
+    </div>
+    
+    {/* Log Container */}
+    <div
+        ref={logContainerRef}
+        style={{
+            flex: 1,
+            padding: "12px",
+            backgroundColor: theme.cardBg,
+            borderRadius: "8px",
+            border: `1px solid ${theme.border}20`,
+            overflowY: "auto",
+            minHeight: "200px",
+            maxHeight: "400px",
+        }}
+    >
+        {eventLog.length === 0 ? (
+            <div style={{
+                ...font,
+                fontSize: "12px",
+                color: theme.textMuted,
+                fontStyle: "italic",
+            }}>
+                Waiting for events...
+            </div>
+        ) : (
+            eventLog.map((entry, i) => (
+                <div
+                    key={i}
+                    style={{
+                        ...font,
+                        fontSize: "12px",
+                        fontFamily: "monospace",
+                        color: getLogColor(entry.type),
+                        marginBottom: "4px",
+                        display: "flex",
+                        gap: "8px",
+                        alignItems: "flex-start",
+                    }}
+                >
+                    <span style={{ opacity: 0.7 }}>{getLogPrefix(entry.type)}</span>
+                    <span>{entry.message}</span>
+                    {entry.detail && (
+                        <span style={{ 
+                            color: theme.textMuted, 
+                            marginLeft: "auto",
+                            fontSize: "11px",
+                        }}>
+                            {entry.detail}
+                        </span>
+                    )}
+                </div>
+            ))
+        )}
+    </div>
+</div>
+```
+
+### Usage Examples
+
+```typescript
+// Simple step logging
+addLogEntry("Scanning row 3", "step")
+addLogEntry("Found operator +", "info", "col 5")
+addLogEntry("Calculated: 123 + 45 = 168", "success")
+addLogEntry("Invalid input detected", "error")
+addLogEntry("Skipping empty row", "warning")
+
+// For algorithm visualization, log each phase:
+addLogEntry("Phase 1: Scanning", "step")
+addLogEntry("Found 4 problems", "info")
+addLogEntry("Phase 2: Solving", "step")
+addLogEntry("Problem 1: 123 + 45 = 168", "success", "+168")
+addLogEntry("Problem 2: 6 × 7 = 42", "success", "+42")
+addLogEntry("Complete! Total: 210", "success")
+```
+
+### Simple Version (for basic needs)
+
+If you just need simple text logging like Day 1:
+
+```typescript
+const [eventLog, setEventLog] = useState<string[]>([])
+
+// Add entry
+setEventLog(prev => [...prev, `L${distance}`])
+
+// Render
+<pre style={{
+    flex: 1,
+    padding: "12px",
+    backgroundColor: `${accentColor}08`,
+    borderRadius: "8px",
+    fontSize: "12px",
+    fontFamily: "monospace",
+    color: accentColor,
+    border: `1px solid ${accentColor}20`,
+    overflowY: "auto",
+    margin: 0,
+    whiteSpace: "pre-wrap",
+    wordBreak: "break-word",
+}}>
+    {eventLog.length > 0 ? eventLog.join("\n") : "No events yet"}
+</pre>
+```
+
+## Two-Column Layout with Event Log
+
+Use this layout pattern when you have a main visualization (grid, chart, etc.) and want an event log beside it. The two-column layout should be the **main container** that takes the full height - don't add separate header/phase sections above it.
+
+**Important**: Stats, titles, and phase indicators should all be **inside the left column**, not above the two-column layout.
+
+```
+┌────────────────────────────┬─────────────────────┐
+│ TITLE                      │ EVENT LOG           │
+│ ┌─────────┐ ┌───────────┐  │ → Starting...       │
+│ │ Stat 1  │ │ Stat 2    │  │ ✓ Step complete     │
+│ └─────────┘ └───────────┘  │ • Processing...     │
+│ ┌────────────────────────┐ │ ✓ Done              │
+│ │                        │ │                     │
+│ │   Main Visualization   │ │  (scrolls if        │
+│ │   (grid, chart, etc)   │ │   content exceeds   │
+│ │                        │ │   left column)      │
+│ └────────────────────────┘ │                     │
+└────────────────────────────┴─────────────────────┘
+```
+
+### Layout JSX
+
+The component's main container should use flex column layout with the two-column grid as its main child:
+
+```tsx
+{/* Main Container */}
+<div
+    ref={containerRef}
+    style={{
+        ...props.style,
+        backgroundColor: theme.bg,
+        display: "flex",
+        flexDirection: "column",
+        padding: "20px",
+        overflow: "hidden",
+        width: "100%",
+        height: "100%",
+        fontFamily: "inherit",
+        color: theme.text,
+    }}
+>
+    {/* Two-Column Layout - takes full height */}
+    <div
+        style={{
+            flex: 1,
+            display: "grid",
+            gridTemplateColumns: "1fr 280px",
+            gap: "24px",
+            width: "100%",
+            minHeight: 0,
+        }}
+    >
+    {/* Left Column - defines the row height */}
+    <div
+        style={{
+            display: "flex",
+            flexDirection: "column",
+            minHeight: 0,
+        }}
+    >
+        {/* Section Title */}
+        <div
+            style={{
+                fontSize: "10px",
+                fontWeight: "bold",
+                color: theme.textMuted,
+                letterSpacing: "0.05em",
+                textTransform: "uppercase",
+                marginBottom: "8px",
+            }}
+        >
+            Grid
+        </div>
+
+        {/* Stats Row */}
+        <div
+            style={{
+                display: "flex",
+                gap: "12px",
+                marginBottom: "12px",
+                flexWrap: "wrap",
+            }}
+        >
+            {/* Stat cards here */}
+        </div>
+
+        {/* Main Visualization - responsive grid */}
+        <div
+            style={{
+                flex: 1,
+                display: "flex",
+                alignItems: "flex-start",
+                justifyContent: "stretch",
+            }}
+        >
+            <div
+                style={{
+                    display: "grid",
+                    gridTemplateColumns: `repeat(${width}, 1fr)`,
+                    gap: "1px",
+                    backgroundColor: theme.cardBg,
+                    padding: "12px",
+                    borderRadius: "8px",
+                    width: "100%",
+                    aspectRatio: `${width} / ${height}`,
+                }}
+            >
+                {/* Grid cells */}
+            </div>
+        </div>
+    </div>
+
+    {/* Right Column - Event Log (matches left column height) */}
+    <div style={{ position: "relative" }}>
+        <div
+            style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                display: "flex",
+                flexDirection: "column",
+                overflow: "hidden",
+            }}
+        >
+            {/* Event Log Title */}
+            <div
+                style={{
+                    fontSize: "10px",
+                    fontWeight: "bold",
+                    color: theme.textMuted,
+                    letterSpacing: "0.05em",
+                    textTransform: "uppercase",
+                    marginBottom: "8px",
+                }}
+            >
+                Event Log
+            </div>
+
+            {/* Scrollable Log Container */}
+            <div
+                ref={logContainerRef}
+                style={{
+                    flex: 1,
+                    padding: "12px",
+                    backgroundColor: theme.cardBg,
+                    borderRadius: "8px",
+                    border: `1px solid ${theme.border}20`,
+                    overflowY: "auto",
+                    minHeight: 0,
+                }}
+            >
+                {/* Log entries */}
+            </div>
+        </div>
+    </div>
+</div>
+```
+
+### Key Points
+
+1. **Left column defines height**: The grid visualization and stats determine the row height
+2. **Event log uses absolute positioning**: `position: relative` on outer div, `position: absolute; inset: 0` on inner - this makes it fill exactly the space defined by the left column
+3. **Responsive grid**: Use `gridTemplateColumns: repeat(n, 1fr)` with `aspectRatio` to maintain proportions
+4. **Event log scrolls internally**: `overflowY: auto` with `minHeight: 0` ensures scrolling works
+5. **Section titles**: Use uppercase, small font, muted color for consistency
+
+## Animation Phases Strategy
+
+Choose your animation phases based on what's **interesting to visualize** for each part of the problem.
+
+### When to Use Detailed Parsing/Analyzing
+
+Use slow, detailed animations when:
+- **Part 1 introduces a new concept** - Show how the algorithm works step-by-step
+- **The parsing itself is the puzzle** - e.g., finding numbers in a grid, parsing expressions
+- **Neighbor/adjacency logic matters** - Show which cells are being checked
+
+```typescript
+// Detailed analyzing - check each item and its neighbors
+type Phase = "analyzing" | "highlight" | "complete"
+
+// State for detailed analysis
+const [analyzeIndex, setAnalyzeIndex] = useState(0)
+const [analyzingCell, setAnalyzingCell] = useState<string | null>(null)
+const [checkingNeighborIndex, setCheckingNeighborIndex] = useState(-1)
+const [checkingNeighbors, setCheckingNeighbors] = useState<Set<string>>(new Set())
+
+// Slow speed for Part 1 to show the logic
+const analyzeSpeed = 200 / speed  // ~200ms per step
+```
+
+### When to Use Fast Scanning
+
+Use fast scanning when:
+- **Part 2 repeats Part 1's logic** - No need to re-explain, just show it working
+- **The algorithm is iterative** - Multiple rounds of the same operation
+- **Focus is on the result, not the process** - e.g., removal animations
+
+```typescript
+// Fast scanning for repeated operations
+type Phase = "round_scanning" | "highlight" | "remove" | "complete"
+
+// State for fast scanning
+const [roundScanIndex, setRoundScanIndex] = useState(0)
+const [scanningCell, setScanningCell] = useState<string | null>(null)
+const [removalRound, setRemovalRound] = useState(0)
+
+// Fast speed - just show it's working
+const scanSpeed = 40 / speed  // ~40ms per item (5x faster)
+```
+
+### Part 1 vs Part 2 Pattern
+
+```typescript
+// In resetState:
+if (part === "part2") {
+    // Skip detailed parsing, start with algorithm execution
+    setPhase("round_scanning")  // or "solving"
+    setEventLog([{ message: "Starting...", type: "step" }])
+} else {
+    // Part 1: Show detailed analysis to teach the concept
+    setPhase("analyzing")
+    setEventLog([{ message: "Starting analysis", type: "step" }])
+}
+```
+
+### Common Phase Patterns
+
+| Problem Type | Part 1 Phases | Part 2 Phases |
+|--------------|---------------|---------------|
+| Grid analysis | `analyzing` → `highlight` → `complete` | `round_scanning` → `highlight` → `remove` → loop |
+| Parsing | `reading_rows` → `solving` → `complete` | `solving` → `complete` (skip parsing) |
+| Pathfinding | `exploring` → `backtrack` → `complete` | `exploring` → `complete` (faster) |
+| Validation | `checking` → `highlight` → `complete` | `batch_check` → `complete` |
+
+### Visual Feedback by Phase Speed
+
+```typescript
+// Detailed (slow) - show more visual feedback
+if (isAnalyzing) {
+    scale = 1.3
+    glow = `0 0 12px ${theme.warning}`
+}
+if (isBeingChecked) {
+    glow = `0 0 8px ${theme.error}80`
+}
+
+// Fast scanning - subtle feedback
+if (isScanning) {
+    scale = 1.2
+    glow = `0 0 10px ${theme.warning}`
+}
+```
+
+### Stats Cards Strategy
+
+Show different stats based on what's interesting for each part:
+
+```typescript
+// Part 1: Show parsing progress
+{phase === "analyzing" && (
+    <StatCard label="Neighbors Found" value={`${neighborCount}/8`} />
+)}
+
+// Part 2: Show algorithm progress
+{part === "part2" && (
+    <>
+        <StatCard label="Round" value={removalRound} />
+        <StatCard label="Removed" value={totalRemoved} />
+    </>
+)}
+
+// Both parts: Show result-relevant stats
+<StatCard label="Accessible (<4)" value={accessible.size} />
+```
+
+### Event Log Messages by Phase
+
+```typescript
+// Part 1 - Detailed logging
+addLogEntry("Checking roll at (3, 5)", "step")
+addLogEntry("Found 3 neighbors", "info", "< 4 = accessible")
+addLogEntry("Roll is accessible!", "success")
+
+// Part 2 - Round-based logging  
+addLogEntry("Round 1: Scanning...", "info")
+addLogEntry("Found 13 accessible", "success")
+addLogEntry("Removing 13 rolls", "warning")
+addLogEntry("Removed 13 rolls", "success", "13 total")
+addLogEntry("Round 2: Scanning...", "info")
+// ...
+addLogEntry("No accessible rolls found", "success", "Total: 43")
+```

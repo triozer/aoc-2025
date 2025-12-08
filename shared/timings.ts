@@ -43,44 +43,30 @@ function checkResult<T>(result: T, expected?: T): string {
 	return ` ${colors.red}✘ FAIL${colors.reset} ${colors.dim}(expected: ${expected})${colors.reset}`;
 }
 
-export function run<T>(name: string, fn: () => T, expected?: T): T {
+export function run<T>(name: string, fn: () => T, expected?: T, runs = 3): T {
 	console.log(
-		`${timestamp()} ${colors.cyan}▶${colors.reset} ${colors.bold}${name}${colors.reset} starting...`,
+		`${timestamp()} ${colors.cyan}▶${colors.reset} ${colors.bold}${name}${colors.reset} starting (x${runs})...`,
 	);
 
-	const start = performance.now();
-	const result = fn();
-	const duration = performance.now() - start;
+	const durations: number[] = [];
+	let result: T;
+
+	for (let i = 0; i < runs; i++) {
+		const start = performance.now();
+		result = fn();
+		durations.push(performance.now() - start);
+	}
+
+	const min = Math.min(...durations);
+	const max = Math.max(...durations);
+	const avg = durations.reduce((a, b) => a + b, 0) / durations.length;
 
 	console.log(
-		`${timestamp()} ${colors.green}✓${colors.reset} ${colors.bold}${name}${colors.reset} finished in ${formatDuration(duration)}`,
+		`${timestamp()} ${colors.green}✓${colors.reset} ${colors.bold}${name}${colors.reset} avg: ${formatDuration(avg)} ${colors.dim}(min: ${formatDuration(min)}${colors.dim}, max: ${formatDuration(max)}${colors.dim})${colors.reset}`,
 	);
 	console.log(
-		`  ${colors.dim}→${colors.reset} ${result}${checkResult(result, expected)}\n`,
+		`  ${colors.dim}→${colors.reset} ${result!}${checkResult(result!, expected)}\n`,
 	);
 
-	return result;
-}
-
-export async function runAsync<T>(
-	name: string,
-	fn: () => Promise<T>,
-	expected?: T,
-): Promise<T> {
-	console.log(
-		`${timestamp()} ${colors.cyan}▶${colors.reset} ${colors.bold}${name}${colors.reset} starting...`,
-	);
-
-	const start = performance.now();
-	const result = await fn();
-	const duration = performance.now() - start;
-
-	console.log(
-		`${timestamp()} ${colors.green}✓${colors.reset} ${colors.bold}${name}${colors.reset} finished in ${formatDuration(duration)}`,
-	);
-	console.log(
-		`  ${colors.dim}→${colors.reset} ${result}${checkResult(result, expected)}\n`,
-	);
-
-	return result;
+	return result!;
 }

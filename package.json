@@ -9,5 +9,8 @@
 	},
 	"peerDependencies": {
 		"typescript": "^5"
+	},
+	"dependencies": {
+		"yalps": "^0.6.3"
 	}
 }
